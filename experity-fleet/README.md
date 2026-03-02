@@ -8,10 +8,23 @@ Full monitoring stack for troubleshooting Windows machines running Experity acro
 
 ## Quick Start
 
+**Option A — Auto-configure from Meraki API (recommended):**
+
+```bash
+export MERAKI_API_KEY=your-api-key-here
+python3 meraki-pull-infrastructure.py
+# Generates .env, SmokePing Targets, Prometheus file_sd, and device inventory
+# from your actual Meraki infrastructure
+
+bash validate-stack-config.sh
+docker compose up -d
+```
+
+**Option B — Manual configuration:**
+
 ```bash
 cp .env.example .env
-# Edit .env with your Experity endpoints, site gateways, and passwords
-nano .env
+nano .env    # Set gateway IPs, SNMP community, passwords manually
 
 docker compose up -d
 docker compose ps
@@ -67,11 +80,37 @@ Import the community Windows Exporter dashboard:
 Triage flow: Grafana alerts → Experity Performance Triage guide → Runbooks A-D
 ```
 
+## Meraki API Integration
+
+`meraki-pull-infrastructure.py` queries the Meraki Dashboard API and auto-generates all config files:
+
+| What it pulls | Where it goes |
+|--------------|---------------|
+| MX appliance LAN IPs (per-site gateways) | `.env` SITE_*_GATEWAY vars + `smokeping/Targets` |
+| Org SNMP community string | `.env` SNMP_COMMUNITY |
+| Network names (sites) | SmokePing target groups, Prometheus file_sd labels |
+| VLAN subnets | Prometheus file_sd target hints |
+| All device inventory (MX, MS, MR) | `meraki-device-inventory.txt` (LibreNMS reference) |
+
+```bash
+# Dry run — preview without writing files
+python3 meraki-pull-infrastructure.py --dry-run
+
+# Non-interactive (auto-select first org)
+python3 meraki-pull-infrastructure.py --auto
+
+# Pass API key directly
+python3 meraki-pull-infrastructure.py --api-key YOUR_KEY
+```
+
+Get your API key: Meraki Dashboard → Organization → Settings → Dashboard API access.
+
 ## File Structure
 
 ```
 ├── docker-compose.yml              # All 7 containers
 ├── .env.example                    # Configuration template
+├── meraki-pull-infrastructure.py   # Auto-generate config from Meraki API
 ├── smokeping/
 │   └── Targets                     # Ping targets (Experity, sites, internet)
 ├── prometheus/

@@ -1,5 +1,6 @@
 # Sensitive config
 .env
+meraki-device-inventory.txt
 
 # Runtime data volumes
 smokeping/data/
