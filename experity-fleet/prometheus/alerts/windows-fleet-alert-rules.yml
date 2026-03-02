@@ -1,0 +1,53 @@
+# Alert rules for Windows fleet running Experity
+# Thresholds tuned for healthcare workstation performance
+
+groups:
+  - name: windows-fleet
+    rules:
+
+      - alert: WindowsCPUSustainedHigh
+        expr: 100 - (avg by (instance) (rate(windows_cpu_time_total{mode="idle"}[5m])) * 100) > 90
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "CPU >90% for 5+ min on {{ $labels.instance }}"
+          description: "Sustained high CPU may cause Experity UI freezes. Check Task Manager for runaway processes."
+          runbook: "See Experity Performance Triage → Runbook B"
+
+      - alert: WindowsMemoryLow
+        expr: 100 - ((windows_os_physical_memory_free_bytes / windows_cs_physical_memory_bytes) * 100) > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "RAM usage >85% on {{ $labels.instance }}"
+          description: "Low memory forces paging, slowing Experity. Check for browser tabs, background apps."
+          runbook: "See Experity Performance Triage → Runbook B"
+
+      - alert: WindowsDiskNearFull
+        expr: 100 - ((windows_logical_disk_free_bytes{volume="C:"} / windows_logical_disk_size_bytes{volume="C:"}) * 100) > 90
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "C: drive >90% full on {{ $labels.instance }}"
+          description: "Low disk causes Windows instability and Experity temp file failures."
+
+      - alert: ExperityServiceDown
+        expr: windows_service_state{name=~".*experity.*", state="running"} != 1
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Experity service stopped on {{ $labels.instance }}"
+          description: "The Experity service is not running. Check Services console."
+
+      - alert: WindowsExporterDown
+        expr: up{job="windows-fleet"} == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Windows Exporter unreachable on {{ $labels.instance }}"
+          description: "Cannot scrape metrics. Check firewall, exporter service, or network connectivity."

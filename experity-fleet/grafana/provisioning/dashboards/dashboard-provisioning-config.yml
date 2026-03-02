@@ -1,0 +1,15 @@
+# Auto-load dashboards from /var/lib/grafana/dashboards
+# Import community Windows Exporter dashboard (ID 14694) manually via Grafana UI,
+# or place exported JSON files in the dashboards/ directory below.
+apiVersion: 1
+
+providers:
+  - name: default
+    orgId: 1
+    folder: "Experity Fleet"
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: /var/lib/grafana/dashboards
+      foldersFromFilesStructure: false

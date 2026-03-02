@@ -1,0 +1,14 @@
+# Sensitive config
+.env
+
+# Runtime data volumes
+smokeping/data/
+smokeping/config/
+librenms/db-data/
+librenms/librenms-data/
+prometheus/data/
+grafana/data/
+
+# OS
+.DS_Store
+Thumbs.db

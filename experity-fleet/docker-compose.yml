@@ -1,0 +1,130 @@
+# Experity Fleet Monitoring Stack
+# Full stack: SmokePing + LibreNMS + Prometheus + Grafana
+#
+# Quick start:
+#   cp .env.example .env   # Edit with your values
+#   docker compose up -d
+#   docker compose ps
+#
+# Web UIs:
+#   SmokePing:  http://localhost:${SMOKEPING_PORT:-8080}
+#   LibreNMS:   http://localhost:${LIBRENMS_PORT:-8000}
+#   Prometheus: http://localhost:${PROMETHEUS_PORT:-9090}
+#   Grafana:    http://localhost:${GRAFANA_PORT:-3000}
+
+services:
+
+  # ── SmokePing: Latency & Packet Loss Graphing ──────────────────
+  smokeping:
+    image: lscr.io/linuxserver/smokeping:latest
+    container_name: smokeping
+    restart: unless-stopped
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-America/Denver}
+    volumes:
+      - ./smokeping/Targets:/config/Targets:ro
+      - smokeping-config:/config
+      - smokeping-data:/data
+    ports:
+      - "${SMOKEPING_PORT:-8080}:80"
+
+  # ── LibreNMS: SNMP Network Monitoring ──────────────────────────
+  librenms-db:
+    image: mariadb:10.11
+    container_name: librenms-db
+    restart: unless-stopped
+    command: --innodb-file-per-table=1 --lower-case-table-names=0
+    volumes:
+      - librenms-db-data:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=${LIBRENMS_DB_PASSWORD}
+      - MYSQL_DATABASE=${LIBRENMS_DB_NAME:-librenms}
+      - MYSQL_USER=${LIBRENMS_DB_USER:-librenms}
+      - MYSQL_PASSWORD=${LIBRENMS_DB_PASSWORD}
+
+  librenms-redis:
+    image: redis:7-alpine
+    container_name: librenms-redis
+    restart: unless-stopped
+    command: --save "" --appendonly no
+
+  librenms:
+    image: librenms/librenms:latest
+    container_name: librenms
+    restart: unless-stopped
+    depends_on:
+      - librenms-db
+      - librenms-redis
+    ports:
+      - "${LIBRENMS_PORT:-8000}:8000"
+    environment:
+      - DB_HOST=${LIBRENMS_DB_HOST:-librenms-db}
+      - DB_NAME=${LIBRENMS_DB_NAME:-librenms}
+      - DB_USER=${LIBRENMS_DB_USER:-librenms}
+      - DB_PASSWORD=${LIBRENMS_DB_PASSWORD}
+      - REDIS_HOST=librenms-redis
+      - TZ=${TZ:-America/Denver}
+      - APP_URL=${LIBRENMS_APP_URL:-http://localhost:8000}
+    volumes:
+      - librenms-data:/data
+
+  librenms-dispatcher:
+    image: librenms/librenms:latest
+    container_name: librenms-dispatcher
+    restart: unless-stopped
+    depends_on:
+      - librenms
+    environment:
+      - DB_HOST=${LIBRENMS_DB_HOST:-librenms-db}
+      - DB_NAME=${LIBRENMS_DB_NAME:-librenms}
+      - DB_USER=${LIBRENMS_DB_USER:-librenms}
+      - DB_PASSWORD=${LIBRENMS_DB_PASSWORD}
+      - REDIS_HOST=librenms-redis
+      - TZ=${TZ:-America/Denver}
+      - DISPATCHER_NODE_ID=dispatcher01
+      - SIDECAR_DISPATCHER=1
+    volumes:
+      - librenms-data:/data
+
+  # ── Prometheus: Metrics Collection ─────────────────────────────
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=${PROMETHEUS_RETENTION:-15d}
+      - --web.enable-lifecycle
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/alerts:/etc/prometheus/alerts:ro
+      - ./prometheus/file_sd:/etc/prometheus/file_sd:ro
+      - prometheus-data:/prometheus
+
+  # ── Grafana: Dashboards & Alerting ─────────────────────────────
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana-data:/var/lib/grafana
+
+volumes:
+  smokeping-config:
+  smokeping-data:
+  librenms-db-data:
+  librenms-data:
+  prometheus-data:
+  grafana-data:

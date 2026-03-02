@@ -1,0 +1,23 @@
+[
+  {
+    "targets": ["192.168.1.101:9182", "192.168.1.102:9182", "192.168.1.103:9182"],
+    "labels": {
+      "site": "main",
+      "location": "Main Office"
+    }
+  },
+  {
+    "targets": ["10.10.1.101:9182", "10.10.1.102:9182"],
+    "labels": {
+      "site": "site2",
+      "location": "Site 2"
+    }
+  },
+  {
+    "targets": ["10.20.1.101:9182"],
+    "labels": {
+      "site": "site3",
+      "location": "Site 3"
+    }
+  }
+]

@@ -1,0 +1,54 @@
+*** Targets ***
+
+probe = FPing
+
+menu = Top
+title = Experity Fleet — Network Latency Monitor
+remark = Multi-site Meraki VPN fleet monitoring for Experity performance triage
+
++ Experity
+menu = Experity Cloud
+title = Experity Cloud Services
+
+++ App
+menu = Experity App
+title = Experity Application Server
+host = app.experity.com
+
+++ Login
+menu = Experity Login
+title = Experity Login Portal
+host = login.experity.com
+
++ Internet
+menu = Internet Health
+title = Internet Connectivity Baseline
+
+++ GoogleDNS
+menu = Google DNS
+title = Google Public DNS (baseline)
+host = 8.8.8.8
+
+++ CloudflareDNS
+menu = Cloudflare DNS
+title = Cloudflare Public DNS
+host = 1.1.1.1
+
++ Sites
+menu = Site Gateways
+title = Multi-Site VPN Gateway Latency
+
+++ MainSite
+menu = Main Site
+title = Main Site Gateway (LAN)
+host = 192.168.1.1
+
+++ Site2
+menu = Site 2
+title = Site 2 Gateway (via VPN)
+host = 10.10.1.1
+
+++ Site3
+menu = Site 3
+title = Site 3 Gateway (via VPN)
+host = 10.20.1.1
