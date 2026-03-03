@@ -210,7 +210,7 @@ services:
   # ── CommafFeed: RSS Feed Reader ─────────────────────────────────────
   # Uses embedded H2 database by default — no external database required.
   commafeed:
-    image: athou/commafeed:latest
+    image: athou/commafeed:latest-h2
     container_name: worklab-commafeed
     restart: unless-stopped
     volumes:
