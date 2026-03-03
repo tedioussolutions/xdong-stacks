@@ -1,0 +1,66 @@
+# Worklab Stack — Caddyfile
+# Routes *.work.lab subdomains to services over the shared worklab-proxy network.
+#
+# ⚠️  DNS prerequisite: *.work.lab must resolve to this machine's IP.
+#     See README.md → DNS Setup for Pi-hole and /etc/hosts instructions.
+#
+# HTTP-only: Local domains cannot use Let's Encrypt certificates.
+# For self-signed TLS, replace site addresses with:
+#   https://home.work.lab { tls internal ... }
+
+{
+    # Disable automatic HTTPS for local domains
+    # (Let's Encrypt won't issue certs for .work.lab TLDs)
+    auto_https off
+}
+
+# ── Homepage Dashboard ───────────────────────────────────────────────
+home.work.lab {
+    reverse_proxy homepage:3000
+}
+
+# ── Code-Server (VS Code in Browser) ────────────────────────────────
+# code-server serves HTTPS on port 8443 with a self-signed certificate.
+# The transport block tells Caddy to skip TLS verification for the backend.
+code.work.lab {
+    reverse_proxy code-server:8443 {
+        transport http {
+            tls_insecure_skip_verify
+        }
+    }
+}
+
+# ── IT-Tools (Developer Utilities) ──────────────────────────────────
+tools.work.lab {
+    reverse_proxy it-tools:80
+}
+
+# ── Netdata (System Monitoring) ──────────────────────────────────────
+netdata.work.lab {
+    reverse_proxy netdata:19999
+}
+
+# ── Stirling-PDF (PDF Toolkit) ───────────────────────────────────────
+pdf.work.lab {
+    reverse_proxy stirling-pdf:8080
+}
+
+# ── ConvertX (File Converter) ────────────────────────────────────────
+convert.work.lab {
+    reverse_proxy convertx:3000
+}
+
+# ── Karakeep (Bookmark Manager) ─────────────────────────────────────
+karakeep.work.lab {
+    reverse_proxy karakeep:3000
+}
+
+# ── CommafFeed (RSS Reader) ──────────────────────────────────────────
+feeds.work.lab {
+    reverse_proxy commafeed:8082
+}
+
+# ── Fluid-Calendar ───────────────────────────────────────────────────
+calendar.work.lab {
+    reverse_proxy fluid-calendar:3000
+}

@@ -1,13 +1,12 @@
 # Local Homelab Stack
 
-Docker Compose stack for local homelab management: reverse proxy, dashboard, Docker management UI, and workflow automation.
+Docker Compose stack for local homelab management: reverse proxy, dashboard, and workflow automation.
 
 | Service | Image | Purpose |
 |---------|-------|---------|
 | Caddy | `caddy:2-alpine` | Reverse proxy — routes `*.local` domains to services |
 | Docker Socket Proxy | `tecnativa/docker-socket-proxy` | Filtered Docker API access (security layer) |
 | Homepage | `ghcr.io/gethomepage/homepage` | Self-hosted dashboard with Docker container status |
-| Arcane | `ghcr.io/getarcaneapp/arcane` | Docker management UI (Portainer replacement) |
 | n8n | `n8nio/n8n` | Workflow automation |
 
 ---
@@ -27,31 +26,25 @@ Docker Compose stack for local homelab management: reverse proxy, dashboard, Doc
 cd xdong-stacks/local-homelab
 ```
 
-**2. Generate Arcane secrets** (run this command **twice** — once per variable):
-```bash
-docker run --rm ghcr.io/getarcaneapp/arcane:latest /app/arcane generate secret
-```
-
-**3. Copy and configure environment:**
+**2. Copy and configure environment:**
 ```bash
 cp .env.example .env
-nano .env   # Paste generated secrets for ARCANE_ENCRYPTION_KEY and ARCANE_JWT_SECRET
+nano .env
 ```
 
-**4. Validate configuration:**
+**3. Validate configuration:**
 ```bash
 bash validate-stack-config.sh
 ```
 
-**5. Deploy:**
+**4. Deploy:**
 ```bash
 docker compose up -d
 docker compose ps
 ```
 
-**6. Access services** (after DNS setup):
+**5. Access services** (after DNS setup):
 - Homepage: http://homepage.local
-- Arcane: http://arcane.local — **default login: `arcane` / `arcane-admin` — change immediately**
 - n8n: http://n8n.local
 
 ---
@@ -67,7 +60,6 @@ In your Pi-hole/AdGuard Home admin:
 2. Add records for each service:
    ```
    homepage.local  →  YOUR_SERVER_IP
-   arcane.local    →  YOUR_SERVER_IP
    n8n.local       →  YOUR_SERVER_IP
    ```
    Or add a wildcard CNAME `*.local → YOUR_SERVER_IP` if your DNS server supports it.
@@ -76,7 +68,7 @@ In your Pi-hole/AdGuard Home admin:
 
 On **each machine** that needs access to the services:
 ```bash
-sudo sh -c 'echo "YOUR_SERVER_IP  homepage.local arcane.local n8n.local" >> /etc/hosts'
+sudo sh -c 'echo "YOUR_SERVER_IP  homepage.local n8n.local" >> /etc/hosts'
 ```
 
 Replace `YOUR_SERVER_IP` with your server's LAN IP (e.g. `192.168.1.10`).
@@ -95,9 +87,7 @@ No management UI. Configuration is in `Caddyfile`.
 
 ### Docker Socket Proxy
 
-Sits between Homepage/Arcane and the Docker daemon. Filters which Docker API endpoints are accessible.
-
-Permissions are set to Arcane's management requirements (containers, images, networks, volumes, POST, DELETE, EXEC). Homepage only uses the read subset.
+Sits between Homepage and the Docker daemon. Filters which Docker API endpoints are accessible — read-only access for container status display.
 
 No external ports — accessed internally as `docker-socket-proxy:2375`.
 
@@ -116,14 +106,6 @@ Edit these files and restart Homepage to apply changes:
 ```bash
 docker compose restart homepage
 ```
-
-### Arcane
-
-Modern Docker management UI. Go-based — fast and lightweight.
-
-- **First login:** `arcane` / `arcane-admin` — change password immediately
-- **Stacks directory:** Set `STACKS_DIR` in `.env` to your compose projects directory. Path must be **identical** inside and outside the container (e.g. `/opt/stacks:/opt/stacks`).
-- **GitOps:** Point Arcane at a Git repo to sync stacks automatically (optional).
 
 ### n8n
 
@@ -144,10 +126,6 @@ All configuration is via environment variables in `.env`:
 | `PUID` / `PGID` | `1000` | User/group ID for file permissions |
 | `CADDY_HTTP_PORT` | `80` | Host port for HTTP |
 | `CADDY_HTTPS_PORT` | `443` | Host port for HTTPS |
-| `ARCANE_APP_URL` | `http://arcane.local` | URL Arcane uses to construct links |
-| `ARCANE_ENCRYPTION_KEY` | — | **Required** — generate with Arcane CLI |
-| `ARCANE_JWT_SECRET` | — | **Required** — generate with Arcane CLI |
-| `STACKS_DIR` | `/opt/stacks` | Host directory for compose stacks (must match inside/outside) |
 | `N8N_HOST` | `n8n.local` | Hostname n8n is accessed at |
 | `N8N_PROTOCOL` | `http` | Protocol (http for local) |
 | `N8N_WEBHOOK_URL` | `http://n8n.local/` | Webhook base URL (include trailing slash) |
@@ -159,14 +137,8 @@ All configuration is via environment variables in `.env`:
 **Services not accessible via `*.local`**
 → DNS not configured. Follow the [DNS Setup](#dns-setup) section. Test with `ping homepage.local`.
 
-**Arcane fails to start**
-→ Check that `ARCANE_ENCRYPTION_KEY` and `ARCANE_JWT_SECRET` in `.env` are generated values, not the placeholder `changeme-...`. Run `bash validate-stack-config.sh` to diagnose.
-
 **Homepage shows no container status**
 → Verify docker-socket-proxy is running: `docker compose ps docker-socket-proxy`. Check `DOCKER_HOST` is set in homepage service. Check `homepage/config/docker.yaml` has correct host/port.
-
-**Arcane can't manage stacks**
-→ The `STACKS_DIR` path must be identical inside and outside the container. If your stacks are at `/home/user/stacks`, set `STACKS_DIR=/home/user/stacks` and ensure the volume mount uses that same path.
 
 **Port 80 or 443 already in use**
 → Another service is bound to that port. Check with `ss -tlnp | grep ':80'`. Either stop the conflicting service or change `CADDY_HTTP_PORT`/`CADDY_HTTPS_PORT` in `.env` and update DNS/bookmarks accordingly.
@@ -176,6 +148,5 @@ All configuration is via environment variables in `.env`:
 ## Related
 
 - [xdong.sh guide](https://github.com/tedioussolutions/xdong) — full walkthrough with screenshots
-- [Arcane docs](https://getarcane.app/docs)
 - [Homepage docs](https://gethomepage.dev)
 - [n8n docs](https://docs.n8n.io)

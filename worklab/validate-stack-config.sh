@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Validate local homelab stack configuration before deploying
+# Validate worklab stack configuration before deploying
 set -euo pipefail
 cd "$(dirname "$(realpath "$0")")"
 
@@ -15,7 +15,7 @@ pass()  { echo -e "${GREEN}✓${NC} $1"; }
 warn()  { echo -e "${YELLOW}⚠${NC} $1"; ((WARNINGS++)); }
 fail()  { echo -e "${RED}✗${NC} $1"; ((ERRORS++)); }
 
-echo "Validating local homelab stack..."
+echo "Validating worklab stack..."
 echo
 
 # ── Check .env exists ────────────────────────────────────────────────
@@ -61,6 +61,26 @@ for f in \
     fi
 done
 
+# ── Check secrets are set ────────────────────────────────────────────
+if [ -f .env ]; then
+    check_secret() {
+        local key="$1"
+        local val
+        val=$(grep "^${key}=" .env 2>/dev/null | cut -d= -f2-)
+        if [ -z "$val" ]; then
+            fail "$key is not set in .env — generate with: openssl rand -base64 32"
+        else
+            pass "$key is set"
+        fi
+    }
+    check_secret MEILI_MASTER_KEY
+    check_secret KARAKEEP_NEXTAUTH_SECRET
+    check_secret POSTGRES_PASSWORD
+    check_secret CALENDAR_NEXTAUTH_SECRET
+    check_secret CODE_SERVER_PASSWORD
+    check_secret CODE_SERVER_SUDO_PASSWORD
+fi
+
 # ── Check Docker socket is accessible ────────────────────────────────
 if [ -S /var/run/docker.sock ]; then
     pass "/var/run/docker.sock accessible"
@@ -80,14 +100,23 @@ done
 # ── Remind about DNS setup ───────────────────────────────────────────
 echo
 echo "────────────────────────────────────────────────────────────────"
-echo "DNS setup required — services are accessed via *.local domains:"
-echo "  homepage.local  →  n8n.local"
+echo "DNS setup required — services are accessed via *.work.lab domains:"
+echo
+echo "  home.work.lab       →  Homepage dashboard"
+echo "  code.work.lab       →  Code-Server (VS Code)"
+echo "  tools.work.lab      →  IT-Tools"
+echo "  netdata.work.lab    →  Netdata monitoring"
+echo "  pdf.work.lab        →  Stirling-PDF"
+echo "  convert.work.lab    →  ConvertX"
+echo "  karakeep.work.lab   →  Karakeep bookmarks"
+echo "  feeds.work.lab      →  CommafFeed RSS"
+echo "  calendar.work.lab   →  Fluid-Calendar"
 echo
 echo "Option A (Pi-hole / AdGuard Home):"
-echo "  Add wildcard CNAME: *.local → your-server-ip"
+echo "  Add wildcard CNAME: *.work.lab → your-server-ip"
 echo
 echo "Option B (/etc/hosts):"
-echo "  echo 'YOUR_SERVER_IP  homepage.local n8n.local' | sudo tee -a /etc/hosts"
+echo "  echo 'YOUR_IP  home.work.lab code.work.lab tools.work.lab netdata.work.lab pdf.work.lab convert.work.lab karakeep.work.lab feeds.work.lab calendar.work.lab' | sudo tee -a /etc/hosts"
 echo "────────────────────────────────────────────────────────────────"
 
 # ── Summary ──────────────────────────────────────────────────────────

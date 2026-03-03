@@ -19,11 +19,6 @@ homepage.local {
     reverse_proxy homepage:3000
 }
 
-# ── Arcane Docker Management UI ─────────────────────────────────────
-arcane.local {
-    reverse_proxy arcane:3552
-}
-
 # ── n8n Workflow Automation ──────────────────────────────────────────
 n8n.local {
     reverse_proxy n8n:5678

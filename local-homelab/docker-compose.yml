@@ -1,11 +1,8 @@
 # Local Homelab Stack
-# Caddy + Homepage + Docker Socket Proxy + Arcane + n8n
+# Caddy + Homepage + Docker Socket Proxy + n8n
 #
 # Quick start:
 #   cp .env.example .env
-#   # Generate Arcane secrets (run twice — one for each var):
-#   docker run --rm ghcr.io/getarcaneapp/arcane:latest /app/arcane generate secret
-#   # Edit .env with generated secrets and your preferences
 #   nano .env
 #   docker compose up -d
 #
@@ -16,14 +13,13 @@
 #
 # Web UIs (after DNS configured):
 #   Homepage:  http://homepage.local
-#   Arcane:    http://arcane.local    (default login: arcane / arcane-admin)
 #   n8n:       http://n8n.local
 
 services:
 
   # ── Docker Socket Proxy: Filtered Docker API Access ─────────────────
-  # Sits between services and the Docker daemon — limits API surface area.
-  # Permissions are set for Arcane (management-level); Homepage uses read subset.
+  # Sits between Homepage and the Docker daemon — limits API surface area.
+  # Read-only access: Homepage uses this to display container status.
   docker-socket-proxy:
     image: tecnativa/docker-socket-proxy:latest
     container_name: docker-socket-proxy
@@ -31,7 +27,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
-      # Core access (read)
+      # Read-only access (Homepage dashboard)
       - CONTAINERS=1
       - IMAGES=1
       - INFO=1
@@ -39,11 +35,6 @@ services:
       - SERVICES=1
       - TASKS=1
       - VOLUMES=1
-      # Management access (required by Arcane)
-      - POST=1
-      - DELETE=1
-      - EXEC=1
-      - BUILD=1
     networks:
       - proxy
     # No ports exposed — accessed internally via docker-socket-proxy:2375
@@ -80,31 +71,6 @@ services:
     networks:
       - proxy
 
-  # ── Arcane: Docker Management UI ────────────────────────────────────
-  # Modern Portainer replacement — Go-based, fast, no paid tiers.
-  # Default login: arcane / arcane-admin  ← CHANGE IMMEDIATELY after first login
-  arcane:
-    image: ghcr.io/getarcaneapp/arcane:latest
-    container_name: arcane
-    restart: unless-stopped
-    environment:
-      - PUID=${PUID:-1000}
-      - PGID=${PGID:-1000}
-      - DOCKER_HOST=tcp://docker-socket-proxy:2375
-      - APP_URL=${ARCANE_APP_URL:-http://arcane.local}
-      - ENCRYPTION_KEY=${ARCANE_ENCRYPTION_KEY}
-      - JWT_SECRET=${ARCANE_JWT_SECRET}
-      - STACKS_DIRECTORY=${STACKS_DIR:-/opt/stacks}
-    volumes:
-      - arcane-data:/app/data
-      # Stacks directory must use identical paths inside and outside container
-      # so Compose file relative paths resolve correctly
-      - ${STACKS_DIR:-/opt/stacks}:${STACKS_DIR:-/opt/stacks}
-    depends_on:
-      - docker-socket-proxy
-    networks:
-      - proxy
-
   # ── n8n: Workflow Automation ─────────────────────────────────────────
   n8n:
     image: n8nio/n8n:latest
@@ -130,5 +96,4 @@ networks:
 volumes:
   caddy-data:
   caddy-config:
-  arcane-data:
   n8n-data:

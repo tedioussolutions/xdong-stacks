@@ -1,0 +1,73 @@
+# Homepage Dashboard — Services
+# Defines the service tiles shown on the dashboard.
+# Full reference: https://gethomepage.dev/latest/configs/services/
+#
+# The "server" key must match the key in docker.yaml (my-server).
+# Container status badges auto-populate from Docker integration.
+
+- Development:
+    - Homepage:
+        icon: homepage.png
+        href: http://home.work.lab
+        description: This dashboard
+        server: my-server
+        container: worklab-homepage
+
+    - Code-Server:
+        icon: code-server.png
+        href: http://code.work.lab
+        description: VS Code in the browser
+        server: my-server
+        container: worklab-code-server
+
+- Productivity:
+    - Fluid-Calendar:
+        icon: calendar.png
+        href: http://calendar.work.lab
+        description: Intelligent calendar and task scheduling
+        server: my-server
+        container: worklab-fluid-calendar
+
+    - CommafFeed:
+        icon: commafeed.png
+        href: http://feeds.work.lab
+        description: RSS feed reader
+        server: my-server
+        container: worklab-commafeed
+
+    - Karakeep:
+        icon: hoarder.png
+        href: http://karakeep.work.lab
+        description: Bookmark manager with full-text search
+        server: my-server
+        container: worklab-karakeep
+
+- Tools:
+    - IT-Tools:
+        icon: it-tools.png
+        href: http://tools.work.lab
+        description: Developer utility toolbox
+        server: my-server
+        container: worklab-it-tools
+
+    - Stirling-PDF:
+        icon: stirling-pdf.png
+        href: http://pdf.work.lab
+        description: PDF manipulation — merge, split, convert
+        server: my-server
+        container: worklab-stirling-pdf
+
+    - ConvertX:
+        icon: convertx.png
+        href: http://convert.work.lab
+        description: File format converter
+        server: my-server
+        container: worklab-convertx
+
+- Monitoring:
+    - Netdata:
+        icon: netdata.png
+        href: http://netdata.work.lab
+        description: Real-time system and container monitoring
+        server: my-server
+        container: worklab-netdata

@@ -1,0 +1,6 @@
+# Homepage Docker Integration
+# Connects to docker-socket-proxy instead of mounting the socket directly.
+# This is the security-hardened approach — the proxy filters API calls.
+my-server:
+  host: docker-socket-proxy
+  port: 2375

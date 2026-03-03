@@ -1,0 +1,16 @@
+# Homepage Dashboard — Bookmarks
+# Full reference: https://gethomepage.dev/latest/configs/bookmarks/
+
+- Documentation:
+    - Code-Server Docs:
+        - href: https://coder.com/docs/code-server
+    - Karakeep Docs:
+        - href: https://docs.karakeep.app
+    - Netdata Docs:
+        - href: https://learn.netdata.cloud
+    - Stirling-PDF Docs:
+        - href: https://stirlingtools.com
+    - CommafFeed Docs:
+        - href: https://github.com/Athou/commafeed
+    - Fluid-Calendar Docs:
+        - href: https://github.com/dotnetfactory/fluid-calendar

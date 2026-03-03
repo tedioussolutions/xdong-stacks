@@ -1,0 +1,16 @@
+# Homepage Dashboard — Settings
+# Full reference: https://gethomepage.dev/latest/configs/settings/
+
+title: Worklab
+description: Portable lab stack dashboard
+
+# Layout: number of columns for the service groups
+columns: 3
+
+# Theme: light or dark
+theme: dark
+color: slate
+
+# Show/hide elements
+showStats: true
+hideVersion: false

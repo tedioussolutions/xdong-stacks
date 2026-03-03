@@ -1,0 +1,254 @@
+# Worklab Stack
+# code-server + IT-Tools + Netdata + Stirling-PDF + ConvertX + Karakeep
+# Homepage + CommafFeed + Fluid-Calendar + Meilisearch + PostgreSQL + Caddy
+#
+# Quick start:
+#   cp .env.example .env
+#   nano .env          # set passwords and secrets
+#   docker compose up -d
+#
+# DNS setup required: map *.work.lab to this machine's IP
+#   Option A: Pi-hole/AdGuard Home — add wildcard DNS record
+#   Option B: /etc/hosts — add entries for each service
+#   See README.md for details
+#
+# Web UIs (after DNS configured):
+#   Homepage:       http://home.work.lab
+#   Code-Server:    http://code.work.lab
+#   IT-Tools:       http://tools.work.lab
+#   Netdata:        http://netdata.work.lab
+#   Stirling-PDF:   http://pdf.work.lab
+#   ConvertX:       http://convert.work.lab
+#   Karakeep:       http://karakeep.work.lab
+#   CommafFeed:     http://feeds.work.lab
+#   Fluid-Calendar: http://calendar.work.lab
+
+services:
+
+  # ── Docker Socket Proxy: Filtered Docker API Access ─────────────────
+  # Sits between Homepage and the Docker daemon — limits API surface area.
+  # Read-only access: Homepage uses this to display container status.
+  docker-socket-proxy:
+    image: tecnativa/docker-socket-proxy:latest
+    container_name: worklab-docker-socket-proxy
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      # Read-only access (Homepage dashboard)
+      - CONTAINERS=1
+      - IMAGES=1
+      - INFO=1
+      - NETWORKS=1
+      - SERVICES=1
+      - TASKS=1
+      - VOLUMES=1
+    networks:
+      - proxy
+    # No ports exposed — accessed internally via docker-socket-proxy:2375
+
+  # ── Caddy: Reverse Proxy & *.work.lab Routing ───────────────────────
+  caddy:
+    image: caddy:2-alpine
+    container_name: worklab-caddy
+    restart: unless-stopped
+    ports:
+      - "${CADDY_HTTP_PORT:-80}:80"
+      - "${CADDY_HTTPS_PORT:-443}:443"
+      - "${CADDY_HTTPS_PORT:-443}:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    networks:
+      - proxy
+
+  # ── Meilisearch: Full-Text Search Engine (Karakeep dependency) ──────
+  # Karakeep requires Meilisearch for bookmark search — does NOT bundle it.
+  # Not exposed to host; accessible only within the proxy network.
+  meilisearch:
+    image: getmeili/meilisearch:v1.12
+    container_name: worklab-meilisearch
+    restart: unless-stopped
+    environment:
+      - MEILI_MASTER_KEY=${MEILI_MASTER_KEY}
+      - MEILI_ENV=production
+    volumes:
+      - meilisearch-data:/meili_data
+    networks:
+      - proxy
+    # No ports exposed — internal only (karakeep connects via http://meilisearch:7700)
+
+  # ── PostgreSQL: Database (Fluid-Calendar dependency) ────────────────
+  # Fluid-Calendar requires PostgreSQL — SQLite is not supported.
+  # Not exposed to host; accessible only within the proxy network.
+  postgres:
+    image: postgres:16-alpine
+    container_name: worklab-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-fluid}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB:-fluid_calendar}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - proxy
+    # No ports exposed — internal only (fluid-calendar connects via DATABASE_URL)
+
+  # ── Homepage: Self-Hosted Dashboard ─────────────────────────────────
+  homepage:
+    image: ghcr.io/gethomepage/homepage:latest
+    container_name: worklab-homepage
+    restart: unless-stopped
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - DOCKER_HOST=tcp://docker-socket-proxy:2375
+    volumes:
+      - ./homepage/config:/app/config
+    depends_on:
+      - docker-socket-proxy
+    networks:
+      - proxy
+
+  # ── Code-Server: VS Code in the Browser ─────────────────────────────
+  # Serves HTTPS on port 8443 (self-signed cert) — Caddy handles TLS termination.
+  code-server:
+    image: linuxserver/code-server:latest
+    container_name: worklab-code-server
+    restart: unless-stopped
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-America/Denver}
+      - PASSWORD=${CODE_SERVER_PASSWORD}
+      - SUDO_PASSWORD=${CODE_SERVER_SUDO_PASSWORD}
+    volumes:
+      - code-server-data:/config
+    networks:
+      - proxy
+
+  # ── IT-Tools: Developer Utility Toolbox ─────────────────────────────
+  it-tools:
+    image: corentinth/it-tools:latest
+    container_name: worklab-it-tools
+    restart: unless-stopped
+    networks:
+      - proxy
+
+  # ── Netdata: Real-Time System Monitoring ────────────────────────────
+  # Requires host system access to collect metrics.
+  netdata:
+    image: netdata/netdata:latest
+    container_name: worklab-netdata
+    restart: unless-stopped
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - apparmor:unconfined
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /etc/os-release:/host/etc/os-release:ro
+      - netdata-config:/etc/netdata
+      - netdata-lib:/var/lib/netdata
+      - netdata-cache:/var/cache/netdata
+    environment:
+      - DOCKER_HOST=tcp://docker-socket-proxy:2375
+    depends_on:
+      - docker-socket-proxy
+    networks:
+      - proxy
+
+  # ── Stirling-PDF: PDF Manipulation Toolkit ───────────────────────────
+  stirling-pdf:
+    image: stirlingtools/stirling-pdf:latest
+    container_name: worklab-stirling-pdf
+    restart: unless-stopped
+    volumes:
+      - stirling-pdf-configs:/configs
+      - stirling-pdf-custom:/customFiles
+    environment:
+      - DOCKER_ENABLE_SECURITY=false
+      - INSTALL_BOOK_AND_ADVANCED_HTML_OPS=false
+      - LANGS=en_GB
+    networks:
+      - proxy
+
+  # ── ConvertX: File Format Converter ─────────────────────────────────
+  convertx:
+    image: ghcr.io/c4illin/convertx:latest
+    container_name: worklab-convertx
+    restart: unless-stopped
+    volumes:
+      - convertx-data:/app/data
+    networks:
+      - proxy
+
+  # ── Karakeep: Bookmark Manager ───────────────────────────────────────
+  # Requires Meilisearch for full-text search (separate container above).
+  # NEXTAUTH_URL must match the URL used to access Karakeep in the browser.
+  karakeep:
+    image: ghcr.io/karakeep-app/karakeep:release
+    container_name: worklab-karakeep
+    restart: unless-stopped
+    environment:
+      - NEXTAUTH_URL=${KARAKEEP_URL:-http://karakeep.work.lab}
+      - NEXTAUTH_SECRET=${KARAKEEP_NEXTAUTH_SECRET}
+      - MEILI_ADDR=http://meilisearch:7700
+      - MEILI_MASTER_KEY=${MEILI_MASTER_KEY}
+      - DATA_DIR=/data
+    volumes:
+      - karakeep-data:/data
+    depends_on:
+      - meilisearch
+    networks:
+      - proxy
+
+  # ── CommafFeed: RSS Feed Reader ─────────────────────────────────────
+  # Uses embedded H2 database by default — no external database required.
+  commafeed:
+    image: athou/commafeed:latest
+    container_name: worklab-commafeed
+    restart: unless-stopped
+    volumes:
+      - commafeed-data:/commafeed/data
+    networks:
+      - proxy
+
+  # ── Fluid-Calendar: Intelligent Calendar App ─────────────────────────
+  # Requires PostgreSQL — DATABASE_URL must point to the postgres container.
+  # NEXTAUTH_URL must match the URL used to access Fluid-Calendar.
+  fluid-calendar:
+    image: eibrahim/fluid-calendar:latest
+    container_name: worklab-fluid-calendar
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-fluid}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-fluid_calendar}
+      - NEXTAUTH_URL=${CALENDAR_URL:-http://calendar.work.lab}
+      - NEXTAUTH_SECRET=${CALENDAR_NEXTAUTH_SECRET}
+    depends_on:
+      - postgres
+    networks:
+      - proxy
+
+networks:
+  proxy:
+    name: worklab-proxy
+    driver: bridge
+
+volumes:
+  caddy-data:
+  caddy-config:
+  meilisearch-data:
+  postgres-data:
+  code-server-data:
+  netdata-config:
+  netdata-lib:
+  netdata-cache:
+  stirling-pdf-configs:
+  stirling-pdf-custom:
+  convertx-data:
+  karakeep-data:
+  commafeed-data:
