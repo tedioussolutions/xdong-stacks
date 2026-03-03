@@ -94,6 +94,7 @@ services:
       - APP_URL=${ARCANE_APP_URL:-http://arcane.local}
       - ENCRYPTION_KEY=${ARCANE_ENCRYPTION_KEY}
       - JWT_SECRET=${ARCANE_JWT_SECRET}
+      - STACKS_DIRECTORY=${STACKS_DIR:-/opt/stacks}
     volumes:
       - arcane-data:/app/data
       # Stacks directory must use identical paths inside and outside container

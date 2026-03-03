@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Validate local homelab stack configuration before deploying
 set -euo pipefail
+cd "$(dirname "$(realpath "$0")")"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
