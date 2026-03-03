@@ -64,3 +64,8 @@ feeds.work.lab {
 calendar.work.lab {
     reverse_proxy fluid-calendar:3000
 }
+
+# ── Audiobookshelf (Audiobook & Podcast Server) ────────────────────
+books.work.lab {
+    reverse_proxy audiobookshelf:80
+}

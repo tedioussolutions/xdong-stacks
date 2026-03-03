@@ -12,8 +12,8 @@ ERRORS=0
 WARNINGS=0
 
 pass()  { echo -e "${GREEN}✓${NC} $1"; }
-warn()  { echo -e "${YELLOW}⚠${NC} $1"; ((WARNINGS++)); }
-fail()  { echo -e "${RED}✗${NC} $1"; ((ERRORS++)); }
+warn()  { echo -e "${YELLOW}⚠${NC} $1"; WARNINGS=$((WARNINGS + 1)); }
+fail()  { echo -e "${RED}✗${NC} $1"; ERRORS=$((ERRORS + 1)); }
 
 echo "Validating worklab stack..."
 echo
@@ -111,12 +111,13 @@ echo "  convert.work.lab    →  ConvertX"
 echo "  karakeep.work.lab   →  Karakeep bookmarks"
 echo "  feeds.work.lab      →  CommafFeed RSS"
 echo "  calendar.work.lab   →  Fluid-Calendar"
+echo "  books.work.lab      →  Audiobookshelf"
 echo
 echo "Option A (Pi-hole / AdGuard Home):"
 echo "  Add wildcard CNAME: *.work.lab → your-server-ip"
 echo
 echo "Option B (/etc/hosts):"
-echo "  echo 'YOUR_IP  home.work.lab code.work.lab tools.work.lab netdata.work.lab pdf.work.lab convert.work.lab karakeep.work.lab feeds.work.lab calendar.work.lab' | sudo tee -a /etc/hosts"
+echo "  echo 'YOUR_IP  home.work.lab code.work.lab tools.work.lab netdata.work.lab pdf.work.lab convert.work.lab karakeep.work.lab feeds.work.lab calendar.work.lab books.work.lab' | sudo tee -a /etc/hosts"
 echo "────────────────────────────────────────────────────────────────"
 
 # ── Summary ──────────────────────────────────────────────────────────

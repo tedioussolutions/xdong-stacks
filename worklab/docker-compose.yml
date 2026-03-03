@@ -1,6 +1,6 @@
 # Worklab Stack
 # code-server + IT-Tools + Netdata + Stirling-PDF + ConvertX + Karakeep
-# Homepage + CommafFeed + Fluid-Calendar + Meilisearch + PostgreSQL + Caddy
+# Homepage + CommafFeed + Fluid-Calendar + Audiobookshelf + Meilisearch + PostgreSQL + Caddy
 #
 # Quick start:
 #   cp .env.example .env
@@ -22,6 +22,7 @@
 #   Karakeep:       http://karakeep.work.lab
 #   CommafFeed:     http://feeds.work.lab
 #   Fluid-Calendar: http://calendar.work.lab
+#   Audiobookshelf: http://books.work.lab
 
 services:
 
@@ -233,6 +234,23 @@ services:
     networks:
       - proxy
 
+  # ── Audiobookshelf: Audiobook & Podcast Server ───────────────────────
+  # Self-hosted audiobook and podcast server with chapter-level progress tracking.
+  # Mount your audiobook and podcast directories as volumes below.
+  audiobookshelf:
+    image: ghcr.io/advplyr/audiobookshelf:latest
+    container_name: worklab-audiobookshelf
+    restart: unless-stopped
+    environment:
+      - TZ=${TZ:-America/Denver}
+    volumes:
+      - audiobookshelf-config:/config
+      - audiobookshelf-metadata:/metadata
+      - ${AUDIOBOOKS_PATH:-./media/audiobooks}:/audiobooks
+      - ${PODCASTS_PATH:-./media/podcasts}:/podcasts
+    networks:
+      - proxy
+
 networks:
   proxy:
     name: worklab-proxy
@@ -251,4 +269,6 @@ volumes:
   stirling-pdf-custom:
   convertx-data:
   karakeep-data:
+  audiobookshelf-config:
+  audiobookshelf-metadata:
   commafeed-data:

@@ -1,6 +1,6 @@
 # Worklab Stack
 
-A portable self-hosted lab stack for development and productivity. 9 services behind a Caddy reverse proxy, all accessible via `*.work.lab` subdomains.
+A portable self-hosted lab stack for development and productivity. 10 services behind a Caddy reverse proxy, all accessible via `*.work.lab` subdomains.
 
 ## Services
 
@@ -15,6 +15,7 @@ A portable self-hosted lab stack for development and productivity. 9 services be
 | http://karakeep.work.lab | Karakeep | Bookmark manager with full-text search |
 | http://feeds.work.lab | CommafFeed | RSS feed reader |
 | http://calendar.work.lab | Fluid-Calendar | Intelligent calendar and task scheduling |
+| http://books.work.lab | Audiobookshelf | Audiobook and podcast server |
 
 **Infrastructure (internal only — no UI):**
 - Caddy — reverse proxy
@@ -60,7 +61,7 @@ In Pi-hole: **Local DNS → DNS Records** → add `*.work.lab → <your-server-i
 Add all subdomains manually:
 
 ```bash
-echo '192.168.1.x  home.work.lab code.work.lab tools.work.lab netdata.work.lab pdf.work.lab convert.work.lab karakeep.work.lab feeds.work.lab calendar.work.lab' | sudo tee -a /etc/hosts
+echo '192.168.1.x  home.work.lab code.work.lab tools.work.lab netdata.work.lab pdf.work.lab convert.work.lab karakeep.work.lab feeds.work.lab calendar.work.lab books.work.lab' | sudo tee -a /etc/hosts
 ```
 
 Replace `192.168.1.x` with your server's actual IP address.
@@ -79,6 +80,8 @@ Edit `.env` before starting the stack. Key variables:
 | `CALENDAR_NEXTAUTH_SECRET` | Fluid-Calendar session secret |
 | `KARAKEEP_URL` | URL for Karakeep (default: `http://karakeep.work.lab`) |
 | `CALENDAR_URL` | URL for Fluid-Calendar (default: `http://calendar.work.lab`) |
+| `AUDIOBOOKS_PATH` | Host path to audiobooks directory (default: `./media/audiobooks`) |
+| `PODCASTS_PATH` | Host path to podcasts directory (default: `./media/podcasts`) |
 
 > ⚠️ **Secret values must not be left empty.** The validation script checks for empty secrets before deployment.
 
@@ -109,6 +112,12 @@ docker compose logs code-server
 DNS is not configured. Follow the DNS Setup section above. Verify with:
 ```bash
 ping home.work.lab
+```
+
+**Audiobookshelf shows empty library**
+Audiobookshelf needs media directories mounted. Point `AUDIOBOOKS_PATH` and `PODCASTS_PATH` in `.env` to your actual media directories and restart:
+```bash
+docker compose restart audiobookshelf
 ```
 
 **Port 80 or 443 already in use**

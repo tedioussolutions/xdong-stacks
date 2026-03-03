@@ -1,2 +1,6 @@
 .env
 homepage/config/logs/
+media/audiobooks/*
+media/podcasts/*
+!media/audiobooks/.gitkeep
+!media/podcasts/.gitkeep

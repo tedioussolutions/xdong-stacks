@@ -64,6 +64,14 @@
         server: my-server
         container: worklab-convertx
 
+- Media:
+    - Audiobookshelf:
+        icon: audiobookshelf.png
+        href: http://books.work.lab
+        description: Audiobook and podcast server
+        server: my-server
+        container: worklab-audiobookshelf
+
 - Monitoring:
     - Netdata:
         icon: netdata.png
