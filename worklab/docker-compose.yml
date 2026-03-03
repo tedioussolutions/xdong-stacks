@@ -1,6 +1,6 @@
 # Worklab Stack
 # code-server + IT-Tools + Netdata + Stirling-PDF + ConvertX + Karakeep
-# Homepage + CommafFeed + Fluid-Calendar + Audiobookshelf + Meilisearch + PostgreSQL + Caddy
+# Homepage + CommafFeed + Fluid-Calendar + Audiobookshelf + Meilisearch + PostgreSQL
 #
 # Quick start:
 #   cp .env.example .env
@@ -26,29 +26,7 @@
 
 services:
 
-  # ── Docker Socket Proxy: Filtered Docker API Access ─────────────────
-  # Sits between Homepage and the Docker daemon — limits API surface area.
-  # Read-only access: Homepage uses this to display container status.
-  docker-socket-proxy:
-    image: tecnativa/docker-socket-proxy:latest
-    container_name: worklab-docker-socket-proxy
-    restart: unless-stopped
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    environment:
-      # Read-only access (Homepage dashboard)
-      - CONTAINERS=1
-      - IMAGES=1
-      - INFO=1
-      - NETWORKS=1
-      - SERVICES=1
-      - TASKS=1
-      - VOLUMES=1
-    networks:
-      - proxy
-    # No ports exposed — accessed internally via docker-socket-proxy:2375
-
-  # ── Caddy: Reverse Proxy & *.work.lab Routing ───────────────────────
+# ── Caddy: Reverse Proxy & *.work.lab Routing ───────────────────────
   caddy:
     image: caddy:2-alpine
     container_name: worklab-caddy
@@ -105,11 +83,9 @@ services:
     environment:
       - PUID=${PUID:-1000}
       - PGID=${PGID:-1000}
-      - DOCKER_HOST=tcp://docker-socket-proxy:2375
     volumes:
       - ./homepage/config:/app/config
-    depends_on:
-      - docker-socket-proxy
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
       - proxy
 
@@ -152,13 +128,10 @@ services:
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
       - /etc/os-release:/host/etc/os-release:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
       - netdata-config:/etc/netdata
       - netdata-lib:/var/lib/netdata
       - netdata-cache:/var/cache/netdata
-    environment:
-      - DOCKER_HOST=tcp://docker-socket-proxy:2375
-    depends_on:
-      - docker-socket-proxy
     networks:
       - proxy
 

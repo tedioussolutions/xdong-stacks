@@ -19,7 +19,6 @@ A portable self-hosted lab stack for development and productivity. 10 services b
 
 **Infrastructure (internal only — no UI):**
 - Caddy — reverse proxy
-- Docker Socket Proxy — filtered Docker API for Homepage
 - Meilisearch — search engine for Karakeep
 - PostgreSQL — database for Fluid-Calendar
 
@@ -145,5 +144,5 @@ docker compose down -v
 ## Security Notes
 
 - Meilisearch is not exposed on any host port — it is accessible only within the Docker proxy network. The `MEILI_MASTER_KEY` protects its API.
-- Docker Socket Proxy limits API access to read-only operations needed by Homepage — the Docker socket is never mounted directly into Homepage.
+- The Docker socket is mounted read-only (`:ro`) into Homepage and Netdata for container status monitoring.
 - Code-Server's password is set via `CODE_SERVER_PASSWORD`. For production use, consider placing it behind an additional auth layer.
