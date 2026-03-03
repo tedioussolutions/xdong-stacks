@@ -1,0 +1,30 @@
+# Local Homelab Stack — Caddyfile
+# Routes *.local subdomains to services over the shared proxy network.
+#
+# ⚠️  DNS prerequisite: *.local must resolve to this machine's IP.
+#     See README.md → DNS Setup for Pi-hole and /etc/hosts instructions.
+#
+# HTTP-only: Local domains cannot use Let's Encrypt certificates.
+# For self-signed TLS, replace the site addresses with:
+#   https://homepage.local { tls internal ... }
+
+{
+    # Disable automatic HTTPS for local domains
+    # (Let's Encrypt won't issue certs for .local TLDs)
+    auto_https off
+}
+
+# ── Homepage Dashboard ───────────────────────────────────────────────
+homepage.local {
+    reverse_proxy homepage:3000
+}
+
+# ── Arcane Docker Management UI ─────────────────────────────────────
+arcane.local {
+    reverse_proxy arcane:3552
+}
+
+# ── n8n Workflow Automation ──────────────────────────────────────────
+n8n.local {
+    reverse_proxy n8n:5678
+}

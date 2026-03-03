@@ -1,0 +1,133 @@
+# Local Homelab Stack
+# Caddy + Homepage + Docker Socket Proxy + Arcane + n8n
+#
+# Quick start:
+#   cp .env.example .env
+#   # Generate Arcane secrets (run twice — one for each var):
+#   docker run --rm ghcr.io/getarcaneapp/arcane:latest /app/arcane generate secret
+#   # Edit .env with generated secrets and your preferences
+#   nano .env
+#   docker compose up -d
+#
+# DNS setup required: map *.local to this machine's IP
+#   Option A: Pi-hole/AdGuard Home — add wildcard DNS record
+#   Option B: /etc/hosts — add entries for each service
+#   See README.md for details
+#
+# Web UIs (after DNS configured):
+#   Homepage:  http://homepage.local
+#   Arcane:    http://arcane.local    (default login: arcane / arcane-admin)
+#   n8n:       http://n8n.local
+
+services:
+
+  # ── Docker Socket Proxy: Filtered Docker API Access ─────────────────
+  # Sits between services and the Docker daemon — limits API surface area.
+  # Permissions are set for Arcane (management-level); Homepage uses read subset.
+  docker-socket-proxy:
+    image: tecnativa/docker-socket-proxy:latest
+    container_name: docker-socket-proxy
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      # Core access (read)
+      - CONTAINERS=1
+      - IMAGES=1
+      - INFO=1
+      - NETWORKS=1
+      - SERVICES=1
+      - TASKS=1
+      - VOLUMES=1
+      # Management access (required by Arcane)
+      - POST=1
+      - DELETE=1
+      - EXEC=1
+      - BUILD=1
+    networks:
+      - proxy
+    # No ports exposed — accessed internally via docker-socket-proxy:2375
+
+  # ── Caddy: Reverse Proxy & *.local Routing ──────────────────────────
+  caddy:
+    image: caddy:2-alpine
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - "${CADDY_HTTP_PORT:-80}:80"
+      - "${CADDY_HTTPS_PORT:-443}:443"
+      - "${CADDY_HTTPS_PORT:-443}:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    networks:
+      - proxy
+
+  # ── Homepage: Self-Hosted Dashboard ─────────────────────────────────
+  homepage:
+    image: ghcr.io/gethomepage/homepage:latest
+    container_name: homepage
+    restart: unless-stopped
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - DOCKER_HOST=tcp://docker-socket-proxy:2375
+    volumes:
+      - ./homepage/config:/app/config
+    depends_on:
+      - docker-socket-proxy
+    networks:
+      - proxy
+
+  # ── Arcane: Docker Management UI ────────────────────────────────────
+  # Modern Portainer replacement — Go-based, fast, no paid tiers.
+  # Default login: arcane / arcane-admin  ← CHANGE IMMEDIATELY after first login
+  arcane:
+    image: ghcr.io/getarcaneapp/arcane:latest
+    container_name: arcane
+    restart: unless-stopped
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - DOCKER_HOST=tcp://docker-socket-proxy:2375
+      - APP_URL=${ARCANE_APP_URL:-http://arcane.local}
+      - ENCRYPTION_KEY=${ARCANE_ENCRYPTION_KEY}
+      - JWT_SECRET=${ARCANE_JWT_SECRET}
+    volumes:
+      - arcane-data:/app/data
+      # Stacks directory must use identical paths inside and outside container
+      # so Compose file relative paths resolve correctly
+      - ${STACKS_DIR:-/opt/stacks}:${STACKS_DIR:-/opt/stacks}
+    depends_on:
+      - docker-socket-proxy
+    networks:
+      - proxy
+
+  # ── n8n: Workflow Automation ─────────────────────────────────────────
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: n8n
+    restart: unless-stopped
+    environment:
+      - N8N_HOST=${N8N_HOST:-n8n.local}
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=${N8N_PROTOCOL:-http}
+      - WEBHOOK_URL=${N8N_WEBHOOK_URL:-http://n8n.local/}
+      - GENERIC_TIMEZONE=${TZ:-America/Denver}
+      - TZ=${TZ:-America/Denver}
+    volumes:
+      - n8n-data:/home/node/.n8n
+    networks:
+      - proxy
+
+networks:
+  proxy:
+    name: proxy
+    driver: bridge
+
+volumes:
+  caddy-data:
+  caddy-config:
+  arcane-data:
+  n8n-data:
