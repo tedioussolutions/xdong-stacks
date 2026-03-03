@@ -1,0 +1,27 @@
+# Homepage Dashboard — Settings
+# Full reference: https://gethomepage.dev/latest/configs/settings/
+
+title: Homelab
+description: Local homelab dashboard
+
+# Layout: number of columns for the service groups
+columns: 3
+
+# Theme: light or dark
+theme: dark
+color: slate
+
+# Show/hide elements
+showStats: true
+hideVersion: false
+
+# Background image (optional — comment out to use solid color)
+# background:
+#   image: https://images.unsplash.com/photo-...
+#   blur: sm
+#   saturate: 50
+#   brightness: 50
+#   opacity: 50
+
+# Log path for debugging
+# logpath: /app/config/logs/

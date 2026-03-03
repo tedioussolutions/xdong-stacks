@@ -1,0 +1,25 @@
+# Homepage Dashboard — Bookmarks
+# Quick links shown as a bookmark bar.
+# Full reference: https://gethomepage.dev/latest/configs/bookmarks/
+
+- Documentation:
+    - xdong.sh Guides:
+        - icon: book.png
+          href: https://github.com/tedioussolutions/xdong
+    - Docker Hub:
+        - icon: docker.png
+          href: https://hub.docker.com
+    - Caddy Docs:
+        - icon: caddy.png
+          href: https://caddyserver.com/docs
+    - n8n Docs:
+        - icon: n8n.png
+          href: https://docs.n8n.io
+
+- Tools:
+    - Arcane Docs:
+        - icon: docker.png
+          href: https://getarcane.app/docs
+    - Homepage Docs:
+        - icon: homepage.png
+          href: https://gethomepage.dev

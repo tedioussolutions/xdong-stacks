@@ -1,0 +1,46 @@
+# Homepage Dashboard — Services
+# Defines the service tiles shown on the dashboard.
+# Full reference: https://gethomepage.dev/latest/configs/services/
+#
+# The "server" key in each widget must match the key in docker.yaml (my-server).
+# Container status badges auto-populate from Docker integration.
+
+- Homelab Management:
+    - Arcane:
+        icon: docker.png
+        href: http://arcane.local
+        description: Docker container management
+        widget:
+          type: arcane
+          url: http://arcane.local
+        server: my-server
+        container: arcane
+
+    - n8n:
+        icon: n8n.png
+        href: http://n8n.local
+        description: Workflow automation
+        server: my-server
+        container: n8n
+
+    - Homepage:
+        icon: homepage.png
+        href: http://homepage.local
+        description: This dashboard
+        server: my-server
+        container: homepage
+
+- Infrastructure:
+    - Caddy:
+        icon: caddy.png
+        href: http://homepage.local
+        description: Reverse proxy (no UI — status only)
+        server: my-server
+        container: caddy
+
+    - Docker Socket Proxy:
+        icon: docker.png
+        href: "#"
+        description: Filtered Docker API proxy (internal only)
+        server: my-server
+        container: docker-socket-proxy
