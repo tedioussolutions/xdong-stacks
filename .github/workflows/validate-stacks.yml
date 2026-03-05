@@ -1,0 +1,65 @@
+name: Validate Stacks
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "*/docker-compose.yml"
+      - "*/Caddyfile"
+      - ".github/workflows/validate-stacks.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "*/docker-compose.yml"
+      - "*/Caddyfile"
+      - ".github/workflows/validate-stacks.yml"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate all stacks
+        run: |
+          PASS=0; FAIL=0
+          for compose in */docker-compose.yml; do
+            stack=$(dirname "$compose")
+            if docker compose -f "$compose" config --quiet 2>/dev/null; then
+              echo "OK    $stack"
+              PASS=$((PASS + 1))
+            else
+              echo "FAIL  $stack"
+              FAIL=$((FAIL + 1))
+            fi
+          done
+          echo "---"
+          echo "Results: $PASS passed, $FAIL failed"
+          [ "$FAIL" -eq 0 ] || exit 1
+
+      - name: Check required files
+        run: |
+          MISSING=0
+          for compose in */docker-compose.yml; do
+            stack=$(dirname "$compose")
+            for f in .env.example validate.sh README.md; do
+              if [ ! -f "$stack/$f" ]; then
+                echo "MISSING $stack/$f"
+                MISSING=$((MISSING + 1))
+              fi
+            done
+          done
+          echo "---"
+          [ "$MISSING" -eq 0 ] && echo "All required files present" || { echo "$MISSING files missing"; exit 1; }
+
+      - name: Check xdong labels
+        run: |
+          UNLABELED=0
+          for compose in */docker-compose.yml; do
+            stack=$(dirname "$compose")
+            if ! grep -q "xdong.stack=" "$compose"; then
+              echo "UNLABELED $stack"
+              UNLABELED=$((UNLABELED + 1))
+            fi
+          done
+          [ "$UNLABELED" -eq 0 ] && echo "All stacks labeled" || { echo "$UNLABELED unlabeled stacks"; exit 1; }
