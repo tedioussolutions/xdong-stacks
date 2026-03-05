@@ -1,0 +1,6 @@
+---
+# Docker integration — read container status directly from docker.sock
+# Homepage mounts /var/run/docker.sock:ro in docker-compose.yml.
+# The "my-server" key is referenced in services.yaml widget blocks.
+my-server:
+  socket: /var/run/docker.sock

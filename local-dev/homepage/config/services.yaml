@@ -1,0 +1,80 @@
+---
+# Homepage service tiles — https://gethomepage.dev/configs/services/
+# Each tile links to the service URL and shows live container status.
+# The "server" and "container" keys wire up Docker status badges.
+
+- Dev Tools:
+    - Code-Server:
+        icon: code.png
+        href: http://localhost:8443
+        description: VS Code in the browser
+        server: my-server
+        container: local-dev-code-server
+    - Forgejo:
+        icon: gitea.png
+        href: http://localhost:3001
+        description: Self-hosted Git service
+        server: my-server
+        container: local-dev-forgejo
+
+- AI / ML:
+    - Open WebUI:
+        icon: open-webui.png
+        href: http://localhost:8081
+        description: AI chat interface (Ollama frontend)
+        server: my-server
+        container: local-dev-open-webui
+    - AnythingLLM:
+        icon: anythingllm.png
+        href: http://localhost:3500
+        description: Self-hosted LLM workspace
+        server: my-server
+        container: local-dev-anythingllm
+    - Qdrant:
+        icon: qdrant.png
+        href: http://localhost:6333/dashboard
+        description: Vector database (REST API + dashboard)
+        server: my-server
+        container: local-dev-qdrant
+    - Meilisearch:
+        icon: meilisearch.png
+        href: http://localhost:7700
+        description: Full-text search engine + mini-dashboard
+        server: my-server
+        container: local-dev-meilisearch
+
+- Automation:
+    - n8n:
+        icon: n8n.png
+        href: http://localhost:5678
+        description: Workflow automation
+        server: my-server
+        container: local-dev-n8n
+    - Activepieces:
+        icon: activepieces.png
+        href: http://localhost:8082
+        description: Open-source automation platform
+        server: my-server
+        container: local-dev-activepieces
+
+- Data & Databases:
+    - Bytebase:
+        icon: bytebase.png
+        href: http://localhost:8888
+        description: Database schema migrations & DevOps
+        server: my-server
+        container: local-dev-bytebase
+
+- Utilities:
+    - Dozzle:
+        icon: dozzle.png
+        href: http://localhost:8080
+        description: Real-time Docker log viewer
+        server: my-server
+        container: local-dev-dozzle
+    - CyberChef:
+        icon: cyberchef.png
+        href: http://localhost:8083
+        description: Data encoding / decoding toolkit
+        server: my-server
+        container: local-dev-cyberchef

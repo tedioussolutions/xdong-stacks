@@ -1,0 +1,32 @@
+---
+# Homepage global settings — https://gethomepage.dev/configs/settings/
+title: Local Dev
+description: Self-hosted local development environment
+
+# Layout
+layout:
+  Dev Tools:
+    style: row
+    columns: 4
+  AI / ML:
+    style: row
+    columns: 4
+  Automation:
+    style: row
+    columns: 4
+  Data & Databases:
+    style: row
+    columns: 4
+  Utilities:
+    style: row
+    columns: 4
+
+# Appearance
+theme: dark
+color: slate
+headerStyle: clean
+target: _blank
+
+# Display
+hideVersion: true
+statusStyle: dot

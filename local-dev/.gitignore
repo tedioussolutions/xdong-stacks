@@ -1,0 +1,9 @@
+# Never commit real secrets
+.env
+
+# Homepage generates logs at runtime — exclude them
+homepage/config/logs/
+
+# Editor artifacts
+.DS_Store
+*.swp

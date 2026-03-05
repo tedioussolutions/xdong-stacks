@@ -1,0 +1,36 @@
+---
+# Homepage bookmarks — https://gethomepage.dev/configs/bookmarks/
+
+- Documentation:
+    - Docker Compose Docs:
+        - href: https://docs.docker.com/compose/
+          icon: docker.png
+    - Forgejo Docs:
+        - href: https://forgejo.org/docs/
+          icon: gitea.png
+    - n8n Docs:
+        - href: https://docs.n8n.io/
+          icon: n8n.png
+    - Activepieces Docs:
+        - href: https://www.activepieces.com/docs/
+          icon: activepieces.png
+    - Qdrant Docs:
+        - href: https://qdrant.tech/documentation/
+          icon: qdrant.png
+    - Meilisearch Docs:
+        - href: https://www.meilisearch.com/docs
+          icon: meilisearch.png
+    - Bytebase Docs:
+        - href: https://www.bytebase.com/docs/
+          icon: bytebase.png
+
+- Tools:
+    - Open WebUI GitHub:
+        - href: https://github.com/open-webui/open-webui
+          icon: github.png
+    - AnythingLLM Docs:
+        - href: https://docs.anythingllm.com/
+          icon: anythingllm.png
+    - CyberChef GitHub:
+        - href: https://github.com/gchq/CyberChef
+          icon: github.png

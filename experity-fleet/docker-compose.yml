@@ -19,6 +19,9 @@ services:
     image: lscr.io/linuxserver/smokeping:latest
     container_name: smokeping
     restart: unless-stopped
+    labels:
+      - "xdong.stack=experity-fleet"
+      - "xdong.category=infrastructure"
     environment:
       - PUID=${PUID:-1000}
       - PGID=${PGID:-1000}
@@ -35,6 +38,9 @@ services:
     image: mariadb:10.11
     container_name: librenms-db
     restart: unless-stopped
+    labels:
+      - "xdong.stack=experity-fleet"
+      - "xdong.category=infrastructure"
     command: --innodb-file-per-table=1 --lower-case-table-names=0
     volumes:
       - librenms-db-data:/var/lib/mysql
@@ -48,12 +54,18 @@ services:
     image: redis:7-alpine
     container_name: librenms-redis
     restart: unless-stopped
+    labels:
+      - "xdong.stack=experity-fleet"
+      - "xdong.category=infrastructure"
     command: --save "" --appendonly no
 
   librenms:
     image: librenms/librenms:latest
     container_name: librenms
     restart: unless-stopped
+    labels:
+      - "xdong.stack=experity-fleet"
+      - "xdong.category=infrastructure"
     depends_on:
       - librenms-db
       - librenms-redis
@@ -74,6 +86,9 @@ services:
     image: librenms/librenms:latest
     container_name: librenms-dispatcher
     restart: unless-stopped
+    labels:
+      - "xdong.stack=experity-fleet"
+      - "xdong.category=infrastructure"
     depends_on:
       - librenms
     environment:
@@ -93,6 +108,9 @@ services:
     image: prom/prometheus:latest
     container_name: prometheus
     restart: unless-stopped
+    labels:
+      - "xdong.stack=experity-fleet"
+      - "xdong.category=infrastructure"
     command:
       - --config.file=/etc/prometheus/prometheus.yml
       - --storage.tsdb.retention.time=${PROMETHEUS_RETENTION:-15d}
@@ -110,6 +128,9 @@ services:
     image: grafana/grafana:latest
     container_name: grafana
     restart: unless-stopped
+    labels:
+      - "xdong.stack=experity-fleet"
+      - "xdong.category=infrastructure"
     depends_on:
       - prometheus
     ports:
