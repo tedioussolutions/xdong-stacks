@@ -1,0 +1,47 @@
+# Caddy Standalone Reverse Proxy Stack
+# Foundation stack — deploy this first; all other stacks attach to the proxy network.
+#
+# Quick start:
+#   cp .env.example .env
+#   nano .env
+#   docker compose up -d
+#
+# See README.md for Caddyfile editing guide and HTTPS setup instructions.
+# Guide: https://xdong.sh/guides/reverse-proxy
+
+services:
+
+  # ── Caddy: Reverse Proxy & TLS Termination ──────────────────────────────
+  caddy:
+    image: caddy:2-alpine
+    container_name: caddy
+    restart: unless-stopped
+    labels:
+      - "xdong.stack=caddy"
+      - "xdong.category=infrastructure"
+      - "xdong.guide=https://xdong.sh/guides/reverse-proxy"
+    ports:
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
+      - "${HTTPS_PORT:-443}:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    networks:
+      - proxy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:2019/config/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+networks:
+  proxy:
+    name: proxy
+    driver: bridge
+
+volumes:
+  caddy-data:
+  caddy-config:

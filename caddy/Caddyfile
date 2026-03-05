@@ -1,0 +1,18 @@
+# Caddy Reverse Proxy — xdong.sh Stack
+# Uncomment and customize the example routes below.
+# See: https://caddyserver.com/docs/caddyfile
+
+{
+    # email your@email.com  # Uncomment for automatic HTTPS via Let's Encrypt
+}
+
+# Example: Reverse proxy to a local service
+# app.yourdomain.com {
+#     reverse_proxy localhost:8080
+# }
+
+# Example: Static file server
+# files.yourdomain.com {
+#     root * /srv/files
+#     file_server
+# }

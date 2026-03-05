@@ -1,0 +1,73 @@
+# AdGuard Home Stack
+# Network-wide ad blocking and DNS server.
+#
+# Quick start:
+#   cp .env.example .env
+#   nano .env          # Adjust ports if needed
+#   bash validate.sh
+#   docker compose up -d
+#
+# Web UI (initial setup): http://HOST_IP:${ADGUARD_WEB_PORT:-3000}
+# After initial setup, the web UI moves to port 80/443 inside the container.
+# Access via the reverse proxy or port 3000 directly for management.
+#
+# IMPORTANT: Port 53 conflicts with systemd-resolved on Ubuntu/Debian.
+# See README.md → "Port 53 Conflict" section before deploying.
+#
+# Guide: https://xdong.sh/guides/adguard-home
+
+services:
+
+  # ── AdGuard Home: DNS Server + Ad Blocker ───────────────────────────────
+  # Handles DNS queries for all network clients and blocks ads/trackers at
+  # the DNS level. No per-device configuration needed — set it once on your
+  # router and all devices on the network benefit.
+  adguard:
+    image: adguard/adguardhome:latest
+    container_name: adguard-home
+    restart: unless-stopped
+    labels:
+      - "xdong.stack=adguard"
+      - "xdong.category=infrastructure"
+    ports:
+      # Web UI — initial setup wizard and ongoing management
+      - "${ADGUARD_WEB_PORT:-3000}:3000"
+      # DNS — plain DNS over TCP and UDP (point clients here)
+      - "${ADGUARD_DNS_PORT:-53}:53/tcp"
+      - "${ADGUARD_DNS_PORT:-53}:53/udp"
+      # DNS-over-HTTPS (DoH) — encrypted DNS for supported clients
+      - "${ADGUARD_HTTPS_PORT:-443}:443/tcp"
+      # DNS-over-TLS (DoT) — encrypted DNS for mobile and router clients
+      - "${ADGUARD_DNS_QUIC_PORT:-853}:853/tcp"
+    environment:
+      - TZ=${TZ:-America/Denver}
+    volumes:
+      # Runtime state: query logs, statistics, filter caches
+      - adguard-work:/opt/adguardhome/work
+      # Configuration: AdGuardHome.yaml, certificates, custom rules
+      - adguard-conf:/opt/adguardhome/conf
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/control/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    networks:
+      - adguard-net
+
+# =============================================================================
+# Network — isolated bridge for the AdGuard stack
+# =============================================================================
+networks:
+  adguard-net:
+    name: adguard-net
+    driver: bridge
+
+# =============================================================================
+# Named Volumes
+# =============================================================================
+volumes:
+  # Runtime data: query logs, statistics, cached filter lists
+  adguard-work:
+  # Configuration: AdGuardHome.yaml, TLS certificates, custom filter lists
+  adguard-conf:

@@ -1,0 +1,64 @@
+# Nextcloud AIO (All-in-One) Stack
+# Quick start: cp .env.example .env && nano .env && docker compose up -d
+# AIO Dashboard: http://localhost:${NEXTCLOUD_AIO_PORT:-8080}
+#
+# IMPORTANT: AIO is a meta-container. On first run it spawns its own sub-containers
+# (Nextcloud app, PostgreSQL, Redis, Collabora, Talk, etc.) via the Docker socket.
+# Do NOT add those sub-containers here — AIO manages them entirely.
+#
+# First-run flow:
+#   1. Open http://localhost:8080 and retrieve your initial AIO passphrase
+#   2. Follow the wizard — AIO pulls sub-container images automatically
+#   3. Set your domain and click "Start containers"
+#   4. Nextcloud becomes available on APACHE_PORT (default 11000) once sub-containers are up
+
+services:
+
+  # ── Nextcloud AIO Mastercontainer ────────────────────────────────────────
+  nextcloud-aio:
+    image: nextcloud/all-in-one:latest
+    container_name: worklab-nextcloud-aio
+    restart: unless-stopped
+    labels:
+      - "xdong.stack=nextcloud"
+      - "xdong.category=daily-apps"
+      - "xdong.guide=https://xdong.sh/guides/nextcloud"
+    environment:
+      # Directory on the Docker host where Nextcloud user data is stored.
+      # Defaults to a named Docker volume; set to an absolute host path to pin it.
+      - NEXTCLOUD_DATADIR=${NEXTCLOUD_DATADIR:-nextcloud_aio_nextcloud_datadir}
+      # Host port AIO exposes for the Nextcloud Apache frontend (reverse-proxy target)
+      - APACHE_PORT=${APACHE_PORT:-11000}
+      # Comma-separated list of trusted domains / IPs for Nextcloud
+      - NEXTCLOUD_TRUSTED_DOMAINS=${NEXTCLOUD_TRUSTED_DOMAINS:-nextcloud.local}
+      # Timezone used by all AIO-managed sub-containers
+      - TZ=${TZ:-America/Denver}
+      # Bind the AIO socket on all interfaces so the dashboard is reachable
+      - AIO_COMMUNITY_CONTAINERS=
+    volumes:
+      # Docker socket — AIO needs this to start/stop its own sub-containers
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # Persistent config for the AIO mastercontainer itself
+      - nextcloud-aio-mastercontainer:/mnt/docker-aio-config
+    ports:
+      # AIO web dashboard / HTTP API
+      - "${NEXTCLOUD_AIO_PORT:-8080}:8080"
+    networks:
+      - nextcloud-proxy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:8080 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+volumes:
+  # Persistent state for the AIO mastercontainer (passphrase, container registry, config)
+  nextcloud-aio-mastercontainer:
+    name: nextcloud-aio-mastercontainer
+
+networks:
+  # Shared bridge network — attach your reverse proxy to this network
+  nextcloud-proxy:
+    name: nextcloud-proxy
+    driver: bridge

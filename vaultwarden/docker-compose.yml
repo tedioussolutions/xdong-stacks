@@ -1,0 +1,44 @@
+# Vaultwarden Stack
+# Bitwarden-compatible self-hosted password manager
+#
+# Quick start:
+#   cp .env.example .env
+#   nano .env          # Set DOMAIN and ADMIN_TOKEN
+#   docker compose up -d
+#
+# HTTPS is required for the Bitwarden browser extension and mobile apps.
+# Place this behind a reverse proxy (Caddy, Traefik, nginx) that terminates TLS.
+#
+# Admin panel: https://YOUR_DOMAIN/admin  (requires ADMIN_TOKEN)
+
+services:
+
+  # ── Vaultwarden: Bitwarden-compatible Password Manager ───────────────
+  vaultwarden:
+    image: vaultwarden/server:latest
+    container_name: vaultwarden
+    restart: unless-stopped
+    labels:
+      - "xdong.stack=vaultwarden"
+      - "xdong.category=daily-apps"
+      - "xdong.guide=https://xdong.sh/guides/password-manager"
+    environment:
+      # Full HTTPS URL — required for browser extension and mobile apps
+      - DOMAIN=${DOMAIN}
+      # Disable public signups — invite users manually via admin panel
+      - SIGNUPS_ALLOWED=${SIGNUPS_ALLOWED:-false}
+      # Admin panel token — generate with: openssl rand -base64 48
+      - ADMIN_TOKEN=${ADMIN_TOKEN}
+    volumes:
+      - vaultwarden-data:/data
+    ports:
+      - "${VAULTWARDEN_PORT:-8080}:80"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/alive"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+volumes:
+  vaultwarden-data:

@@ -1,0 +1,54 @@
+# Home Assistant Stack
+# Quick start: cp .env.example .env && nano .env && docker compose up -d
+# Web UI: http://localhost:8123
+
+services:
+  homeassistant:
+    image: ghcr.io/home-assistant/home-assistant:stable
+    container_name: homeassistant
+    restart: unless-stopped
+    labels:
+      - "xdong.stack=home-assistant"
+      - "xdong.category=home-automation"
+      - "xdong.guide=https://xdong.sh/guides/home-assistant-core"
+    environment:
+      - TZ=${TZ:-America/Denver}
+    volumes:
+      - homeassistant-config:/config
+    ports:
+      - "${HA_PORT:-8123}:8123"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8123/api/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    # network_mode: host is common for device discovery but breaks container networking
+    # Use host mode only if you need mDNS/SSDP discovery for smart home devices
+
+  # Optional: MQTT broker for Zigbee/Z-Wave integration
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: homeassistant-mosquitto
+    restart: unless-stopped
+    labels:
+      - "xdong.stack=home-assistant"
+      - "xdong.category=home-automation"
+    volumes:
+      - mosquitto-data:/mosquitto/data
+      - mosquitto-log:/mosquitto/log
+    ports:
+      - "${MQTT_PORT:-1883}:1883"
+    healthcheck:
+      test: ["CMD", "mosquitto_sub", "-t", "$$SYS/#", "-C", "1", "-i", "healthcheck", "-W", "3"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    profiles:
+      - mqtt
+
+volumes:
+  homeassistant-config:
+  mosquitto-data:
+  mosquitto-log:
