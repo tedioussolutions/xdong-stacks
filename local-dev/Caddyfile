@@ -1,0 +1,57 @@
+# local-dev Caddyfile — HTTP reverse proxy for all services
+# DNS setup required: map *.local.dev to this machine's IP
+#   Option A: /etc/hosts entries for each service
+#   Option B: Pi-hole/AdGuard wildcard DNS record
+
+{
+	http_port 80
+	auto_https off
+}
+
+home.local.dev {
+	reverse_proxy homepage:3000
+}
+
+code.local.dev {
+	reverse_proxy code-server:8443
+}
+
+git.local.dev {
+	reverse_proxy forgejo:3000
+}
+
+search.local.dev {
+	reverse_proxy meilisearch:7700
+}
+
+vectors.local.dev {
+	reverse_proxy qdrant:6333
+}
+
+n8n.local.dev {
+	reverse_proxy n8n:5678
+}
+
+logs.local.dev {
+	reverse_proxy dozzle:8080
+}
+
+db.local.dev {
+	reverse_proxy bytebase:8080
+}
+
+chat.local.dev {
+	reverse_proxy open-webui:8080
+}
+
+automate.local.dev {
+	reverse_proxy activepieces:80
+}
+
+chef.local.dev {
+	reverse_proxy cyberchef:8000
+}
+
+llm.local.dev {
+	reverse_proxy anythingllm:3001
+}

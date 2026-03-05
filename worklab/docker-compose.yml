@@ -42,6 +42,12 @@ services:
       - caddy-config:/config
     networks:
       - proxy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:2019/config/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   # ── Meilisearch: Full-Text Search Engine (Karakeep dependency) ──────
   # Karakeep requires Meilisearch for bookmark search — does NOT bundle it.
@@ -61,6 +67,12 @@ services:
     networks:
       - proxy
     # No ports exposed — internal only (karakeep connects via http://meilisearch:7700)
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:7700/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   # ── PostgreSQL: Database (Fluid-Calendar dependency) ────────────────
   # Fluid-Calendar requires PostgreSQL — SQLite is not supported.
@@ -81,6 +93,12 @@ services:
     networks:
       - proxy
     # No ports exposed — internal only (fluid-calendar connects via DATABASE_URL)
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-fluid}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   # ── Homepage: Self-Hosted Dashboard ─────────────────────────────────
   homepage:
@@ -98,6 +116,12 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
       - proxy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   # ── Code-Server: VS Code in the Browser ─────────────────────────────
   # Serves HTTPS on port 8443 (self-signed cert) — Caddy handles TLS termination.
@@ -118,6 +142,12 @@ services:
       - code-server-data:/config
     networks:
       - proxy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8443"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
   # ── IT-Tools: Developer Utility Toolbox ─────────────────────────────
   it-tools:
@@ -129,6 +159,12 @@ services:
       - "xdong.category=full-stack"
     networks:
       - proxy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   # ── Netdata: Real-Time System Monitoring ────────────────────────────
   # Requires host system access to collect metrics.
@@ -153,6 +189,12 @@ services:
       - netdata-cache:/var/cache/netdata
     networks:
       - proxy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:19999/api/v1/info"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
   # ── Stirling-PDF: PDF Manipulation Toolkit ───────────────────────────
   stirling-pdf:
@@ -171,6 +213,12 @@ services:
       - LANGS=en_GB
     networks:
       - proxy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   # ── ConvertX: File Format Converter ─────────────────────────────────
   convertx:
@@ -184,6 +232,12 @@ services:
       - convertx-data:/app/data
     networks:
       - proxy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   # ── Karakeep: Bookmark Manager ───────────────────────────────────────
   # Requires Meilisearch for full-text search (separate container above).
@@ -204,9 +258,16 @@ services:
     volumes:
       - karakeep-data:/data
     depends_on:
-      - meilisearch
+      meilisearch:
+        condition: service_healthy
     networks:
       - proxy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   # ── CommafFeed: RSS Feed Reader ─────────────────────────────────────
   # Uses embedded H2 database by default — no external database required.
@@ -221,6 +282,12 @@ services:
       - commafeed-data:/commafeed/data
     networks:
       - proxy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8082"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   # ── Fluid-Calendar: Intelligent Calendar App ─────────────────────────
   # Requires PostgreSQL — DATABASE_URL must point to the postgres container.
@@ -237,9 +304,16 @@ services:
       - NEXTAUTH_URL=${CALENDAR_URL:-http://calendar.work.lab}
       - NEXTAUTH_SECRET=${CALENDAR_NEXTAUTH_SECRET}
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     networks:
       - proxy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   # ── Audiobookshelf: Audiobook & Podcast Server ───────────────────────
   # Self-hosted audiobook and podcast server with chapter-level progress tracking.
@@ -260,6 +334,12 @@ services:
       - ${PODCASTS_PATH:-./media/podcasts}:/podcasts
     networks:
       - proxy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
 networks:
   proxy:

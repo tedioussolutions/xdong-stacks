@@ -27,6 +27,10 @@
 #   CyberChef:      http://localhost:8083   (data encoding/decoding tools)
 #   AnythingLLM:    http://localhost:3500   (LLM workspace)
 #
+# Subdomain routing (optional — requires Caddy + DNS):
+#   home.local.dev, code.local.dev, git.local.dev, n8n.local.dev, ...
+#   See Caddyfile for details.
+#
 # =============================================================================
 
 # =============================================================================
@@ -51,9 +55,35 @@
 #   AP_JWT_SECRET=<openssl rand -hex 16>         (exactly 32 hex chars)
 #   ANYTHINGLLM_JWT_SECRET=<openssl rand -base64 32>
 #   ANYTHINGLLM_PASSWORD=change-me-anythingllm-password
+#   CADDY_HTTP_PORT=80                       (optional — default 80)
 # =============================================================================
 
 services:
+
+# ── Caddy: Reverse Proxy & *.local.dev Routing ────────────────────────────────
+# Optional — only needed if you want subdomain-based access instead of direct ports.
+# Requires DNS setup: map *.local.dev to this machine's IP (see Caddyfile header).
+  caddy:
+    image: caddy:2-alpine
+    container_name: local-dev-caddy
+    restart: unless-stopped
+    labels:
+      - "xdong.stack=local-dev"
+      - "xdong.category=full-stack"
+    ports:
+      - "${CADDY_HTTP_PORT:-80}:80"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:2019/config/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - local-dev-net
 
 # ── Postgres: Shared Database Instance ───────────────────────────────────────
 # A single Postgres 16 instance serves multiple services. Each service gets
@@ -128,6 +158,12 @@ services:
     volumes:
       - ./homepage/config:/app/config
       - /var/run/docker.sock:/var/run/docker.sock:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
     networks:
       - local-dev-net
 
@@ -153,6 +189,12 @@ services:
       # - SUDO_PASSWORD=${CODE_SERVER_SUDO_PASSWORD}
     volumes:
       - code-server-data:/config   # workspace, extensions, settings
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8443"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     networks:
       - local-dev-net
 
@@ -196,6 +238,12 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     networks:
       - local-dev-net
 
@@ -218,6 +266,12 @@ services:
       - QDRANT__SERVICE__API_KEY=${QDRANT_API_KEY:-}
     volumes:
       - qdrant-data:/qdrant/storage
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:6333/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
     networks:
       - local-dev-net
 
@@ -238,6 +292,12 @@ services:
       - MEILI_ENV=production
     volumes:
       - meilisearch-data:/meili_data
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:7700/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
     networks:
       - local-dev-net
 
@@ -274,6 +334,12 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:5678/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
     networks:
       - local-dev-net
 
@@ -291,6 +357,12 @@ services:
       - "8080:8080"   # http://localhost:8080
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:8080/healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
     networks:
       - local-dev-net
 
@@ -317,6 +389,12 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:8080/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
     networks:
       - local-dev-net
 
@@ -342,6 +420,12 @@ services:
       - "host.docker.internal:host-gateway"
     volumes:
       - open-webui-data:/app/backend/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     networks:
       - local-dev-net
 
@@ -380,6 +464,12 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     networks:
       - local-dev-net
 
@@ -395,6 +485,12 @@ services:
       - "xdong.category=full-stack"
     ports:
       - "8083:8000"   # http://localhost:8083
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:8000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
     networks:
       - local-dev-net
 
@@ -424,6 +520,12 @@ services:
       - "host.docker.internal:host-gateway"
     volumes:
       - anythingllm-data:/app/server/storage
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3001/api/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
     networks:
       - local-dev-net
 
@@ -451,3 +553,5 @@ volumes:
   open-webui-data:
   activepieces-data:
   anythingllm-data:
+  caddy-data:
+  caddy-config:

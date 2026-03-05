@@ -42,6 +42,12 @@ services:
     networks:
       - proxy
     # No ports exposed — accessed internally via docker-socket-proxy:2375
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:2375/_ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   # ── Caddy: Reverse Proxy & *.local Routing ──────────────────────────
   caddy:
@@ -62,6 +68,12 @@ services:
       - caddy-config:/config
     networks:
       - proxy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:2019/config/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
 
   # ── Homepage: Self-Hosted Dashboard ─────────────────────────────────
   homepage:
@@ -79,9 +91,16 @@ services:
     volumes:
       - ./homepage/config:/app/config
     depends_on:
-      - docker-socket-proxy
+      docker-socket-proxy:
+        condition: service_healthy
     networks:
       - proxy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
 
   # ── n8n: Workflow Automation ─────────────────────────────────────────
   n8n:
@@ -103,6 +122,12 @@ services:
       - n8n-data:/home/node/.n8n
     networks:
       - proxy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:5678/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
 networks:
   proxy:
